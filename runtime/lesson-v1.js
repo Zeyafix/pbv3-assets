@@ -18,8 +18,36 @@
       ? "dark"
       : "light";
 
+  async function highlightPython() {
+    const examples = document.querySelectorAll(".code-example pre > code.language-python");
+    if (!examples.length) return;
+    try {
+      const { createHighlighter } = await import("https://esm.sh/shiki@4.4.3");
+      const highlighter = await createHighlighter({
+        langs: ["python"],
+        themes: ["dark-plus"],
+      });
+      try {
+        for (const code of examples) {
+          const template = document.createElement("template");
+          template.innerHTML = highlighter.codeToHtml(code.textContent, {
+            lang: "python",
+            theme: "dark-plus",
+          });
+          code.replaceChildren(...template.content.querySelector("code").childNodes);
+        }
+      } finally {
+        highlighter.dispose();
+      }
+    } catch (error) {
+      // Keep the source readable and copyable when the CDN is unavailable.
+      console.warn("Python syntax highlighting unavailable:", error);
+    }
+  }
+
   // All DOM-dependent work waits until the lesson markup is available.
   function initializePage() {
+    highlightPython();
     const documentRoot = document.documentElement;
     const themeButton = document.querySelector(".theme-toggle");
     const systemThemeMedia = window.matchMedia(
